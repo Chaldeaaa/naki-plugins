@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "apiVersion": 1,
+  "id": "naki-plugin-ex-gist-logger",
+  "name": "Gist 匯入測試（naki-plugin-ex）",
+  "version": "1.1.0",
+  "entry": "plugin.js",
+  "capabilities": ["observe"],
+  "methods": [".lq.FastTest.authGame", ".lq.ActionPrototype"],
+  "priority": 100,
+  "license": "CC0-1.0",
+  "settings": { "tag": { "type": "string", "default": "gist", "description": "log 前綴" } },
+  "description": "從 gist 匯入的 Naki 官方範例插件（naki-plugin-ex 命名）：只 observe、記一行 log。"
+}
