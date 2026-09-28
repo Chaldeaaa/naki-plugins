@@ -3,14 +3,15 @@
   "apiVersion": 1,
   "id": "naki-plugin-ex-name-hider",
   "name": "暱稱隱藏（naki-plugin-ex）",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "entry": "plugin.js",
   "capabilities": [
     "observe"
   ],
   "methods": [
-    ".lq.ActionPrototype",
-    ".lq.FastTest.authGame"
+    ".lq.FastTest.authGame",
+    ".lq.NotifyGameEndResult",
+    ".lq.NotifyGameTerminate"
   ],
   "priority": 100,
   "license": "CC0-1.0",
@@ -21,5 +22,5 @@
       "description": "隱藏所有玩家暱稱"
     }
   },
-  "description": "用 window.__nakiHighlight.setNameMask 遮住所有暱稱。只 observe、呼叫 Naki 現成渲染層遮罩 API。"
+  "description": "僅在 Naki 提供非空手牌上下文時啟用名字遮罩；大廳、載入、關閉推薦與退出對局時停止。需要支援 onRecommendations/context.hand 的 Naki；舊版保持關閉。對局內校準仍屬實驗性功能。"
 }
