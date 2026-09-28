@@ -1,23 +1,35 @@
 (function () {
-  // 名字遮罩靠渲染層自我校準（讀像素認出名字 draw）。校準必須在牌桌已渲染時跑；
-  // authGame 抵達時畫面還在載入，太早校準會挑錯或挑不到，而且只喊一次就再也不重試。
-  // 因此這裡持續重試，直到 nameMaskStatus().targets>0（已認出名字）才停；校準進行中不打斷。
-  var masked = false;
+  'use strict';
+  function setEnabled(hide, ctx) {
+    var H = window.__nakiHighlight;
+    if (!H || !H.setNameMask) return;
+    var state = H.nameMaskStatus ? H.nameMaskStatus() : null;
+    // Preserve the renderer's calibration cooldown while the state is unchanged.
+    if (!state || state.enabled !== hide) {
+      H.setNameMask(hide);
+      if (ctx && ctx.log) ctx.log('setNameMask(' + hide + ')');
+    }
+  }
+  function apply(ctx) {
+    // Registration replays recommendations even in the lobby. Never start an
+    // invasive UI calibration without the current hand snapshot from Naki.
+    // Missing context (older runtimes), loading, mode off and game reset stay off.
+    var hand = ctx.context && ctx.context.hand;
+    var ready = Array.isArray(hand) && hand.length > 0;
+    setEnabled(ready && (!ctx.settings || ctx.settings.hide !== false), ctx);
+  }
   window.__nakiPlugins.register({
     id: 'naki-plugin-ex-name-hider',
     onReceive: function (ctx) {
-      var H = window.__nakiHighlight;
-      if (!H || !H.setNameMask) return;
-      var hide = (ctx.settings && typeof ctx.settings.hide === 'boolean') ? ctx.settings.hide : true;
-      if (!hide) {
-        if (masked) { H.setNameMask(false); masked = false; ctx.log('setNameMask(false)'); }
-        return;
-      }
-      var st = H.nameMaskStatus ? H.nameMaskStatus() : null;
-      if (st && st.targets > 0) { masked = true; return; }  // 已認出名字，收工
-      if (st && st.calibrating) return;                     // 校準進行中，別重置
-      H.setNameMask(true);                                  // 尚未認出 → 觸發（重）校準
-      ctx.log('setNameMask(true) 校準中');
+      // Authentication precedes the table rendering. Terminal events can arrive
+      // before Swift clears the hand snapshot. None of these may enable masking.
+      if (ctx.method === '.lq.FastTest.authGame'
+          || ctx.method === '.lq.NotifyGameEndResult'
+          || ctx.method === '.lq.NotifyGameTerminate') setEnabled(false, ctx);
+    },
+    onRecommendations: apply,
+    onDisable: function () {
+      if (window.__nakiHighlight) window.__nakiHighlight.setNameMask(false);
     }
   });
 })();
