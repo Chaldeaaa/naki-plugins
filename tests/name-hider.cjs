@@ -3,11 +3,12 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
-function setup() {
+function setup(legacy = false) {
   let spec, enabled = false;
   const calls = [];
   const window = {
-    __nakiPlugins: { register(value) { spec = value; } },
+    __nakiPlugins: legacy ? { register(value) { spec = value; } }
+      : { register(value) { spec = value; }, recommendationsChanged() {} },
     __nakiHighlight: {
       nameMaskStatus() { return { enabled, targets: 0, calibrating: false }; },
       setNameMask(on) { enabled = on; calls.push(on); }
@@ -57,3 +58,13 @@ for (const method of ['.lq.FastTest.authGame', '.lq.NotifyGameEndResult', '.lq.N
     assert.equal(isEnabled(), true);
   });
 }
+test('legacy runtime without onRecommendations falls back to packet-driven calibration', () => {
+  const { spec, calls, isEnabled } = setup(true);
+  spec.onReceive({ method: '.lq.FastTest.authGame', settings: { hide: true }, log() {} });
+  assert.deepEqual(calls, []);
+  spec.onReceive({ method: '.lq.ActionPrototype', settings: { hide: true }, log() {} });
+  assert.equal(isEnabled(), true);
+  spec.onReceive({ method: '.lq.ActionPrototype', settings: { hide: false }, log() {} });
+  assert.equal(isEnabled(), false);
+  assert.deepEqual(calls, [true, false]);
+});

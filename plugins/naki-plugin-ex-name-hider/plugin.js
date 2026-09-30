@@ -25,7 +25,14 @@
       // before Swift clears the hand snapshot. None of these may enable masking.
       if (ctx.method === '.lq.FastTest.authGame'
           || ctx.method === '.lq.NotifyGameEndResult'
-          || ctx.method === '.lq.NotifyGameTerminate') setEnabled(false, ctx);
+          || ctx.method === '.lq.NotifyGameTerminate') { setEnabled(false, ctx); return; }
+      // 舊版 Naki 沒有 onRecommendations：退回「每個動作封包觸發校準，認出名字就停」。
+      if (window.__nakiPlugins.recommendationsChanged || ctx.method !== '.lq.ActionPrototype') return;
+      if (ctx.settings && ctx.settings.hide === false) { setEnabled(false, ctx); return; }
+      var H = window.__nakiHighlight;
+      var st = H && H.nameMaskStatus ? H.nameMaskStatus() : null;
+      if (st && (st.targets > 0 || st.calibrating)) return;
+      if (H && H.setNameMask) { H.setNameMask(true); ctx.log('setNameMask(true) 校準中'); }
     },
     onRecommendations: apply,
     onDisable: function () {
