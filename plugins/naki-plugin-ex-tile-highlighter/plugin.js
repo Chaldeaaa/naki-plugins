@@ -35,13 +35,9 @@
         marks.push({ tile: tile, color: [1, 0.75, 0.4] });
       });
     }
-    // Unseen draw signatures also include full-screen effects: opt-in only.
-    var popup = settings.experimentalPopup === true && context.isCallOpportunity
-      && top && ['chi', 'pon', 'kan', 'hora'].indexOf(top.actionType) !== -1
-      ? [0.45, 1, 0.5] : null;
-    if (marks.length || popup) H.set(marks, popup);
+    if (marks.length) H.set(marks, null);
     else if (H.clear) H.clear();
-    var state = JSON.stringify([marks, popup]);
+    var state = JSON.stringify(marks);
     if (state !== lastState) {
       ctx.log('highlight ' + (top ? top.actionType + ' ' + (top.tile || top.displayTile || '') : 'clear')
         + ' targets=' + marks.length);
